@@ -1,0 +1,21 @@
+{
+  "runtime": {
+    "python": "3.12",
+    "mlxAudio": "0.6.1",
+    "mlxAudioCommit": "4510ba631faf5676b2bf4633161756664d154e28"
+  },
+  "models": {
+    "parakeet": {
+      "repo": "mlx-community/parakeet-tdt-0.6b-v3",
+      "revision": "ed2b7e8c15f9aaa0b5772e2efb986255eaef7e15",
+      "license": "CC-BY-4.0",
+      "downloadSize": "about 2.51 GB"
+    },
+    "qwen3-asr": {
+      "repo": "mlx-community/Qwen3-ASR-0.6B-8bit",
+      "revision": "89e96d92ba34aca20b3e29fb10cc284097d1219f",
+      "license": "Apache-2.0",
+      "downloadSize": "about 1.01 GB"
+    }
+  }
+}

@@ -1,0 +1,11 @@
+[project]
+name = "opencode-native-dictate-runtime"
+version = "0.1.0"
+description = "Isolated local speech recognition runtime for OpenCode Native Dictate"
+requires-python = ">=3.12,<3.13"
+dependencies = [
+    "mlx-audio==0.6.1",
+]
+
+[tool.uv]
+package = false

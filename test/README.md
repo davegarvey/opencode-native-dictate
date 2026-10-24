@@ -1,0 +1,9 @@
+# Session and lifecycle tests
+
+`controller.test.mjs` exercises session ownership with a fake backend. A session starts in `starting`, becomes `recording` only after the backend resolves readiness, and transitions once to `transcribing` on Enter or the duration limit. Cancellation or failure increments the request generation, aborts pending work and removes the recording. A late ready handle is cleaned immediately; a late recognition result is ignored. Repeated stop calls share one stop/transcription operation.
+
+The controller also owns a 50 ms prompt guard. A changed editor, route, cursor or draft cancels the session without restoring the captured draft. `host.test.mjs` covers those host identity and revision checks; `input-guard.test.mjs` verifies busy keystrokes and paste are consumed, listeners are removed on disposal, and a later activation installs only one active guard. `status.test.mjs` checks the footer's distinct phases, 100 ms simulated meter cadence and compact narrow-terminal rendering.
+
+`tui-lifecycle.test.mjs` builds and loads the actual TUI entry, calls its setup disposer repeatedly, and checks that input listeners return to baseline and stale command callbacks become inert. It also checks that the default start binding is `<leader>d`, a configured shortcut overrides it, and the synthetic/fake safety probes stay hidden from the command palette and slash completion. The OpenCode 2.1.4 `keymap.layer` contract removes command layers when the plugin deactivates; live shortcut delivery and repeated command registration still need a real-host check.
+
+These are deterministic fake-backend and host-adapter tests. They do not validate microphone capture, a real ML model, repeated command registration in the live host, or the incomplete attachment/undo acceptance cases documented in `../docs/architecture.md`.

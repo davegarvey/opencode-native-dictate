@@ -1,0 +1,38 @@
+{
+  "name": "opencode-native-dictate",
+  "version": "0.1.0",
+  "license": "MIT",
+  "type": "module",
+  "private": true,
+  "exports": {
+    "./tui": "./dist/tui.js"
+  },
+  "scripts": {
+    "build": "node scripts/build.mjs",
+    "build:native": "mkdir -p bin && /usr/bin/swiftc -module-cache-path /tmp/dictate-swift-cache -O native/PermissionGate.swift native/AudioDevices.swift native/CaptureHealth.swift native/AudioFormat.swift native/Recorder.swift native/main.swift -o bin/recorder",
+    "test:native": "/usr/bin/swiftc -module-cache-path /tmp/dictate-swift-test-cache native/PermissionGate.swift native/AudioDevices.swift native/CaptureHealth.swift native/AudioFormat.swift native/tests/PermissionGateTests.swift -o /tmp/opencode-dictate-native-tests && /tmp/opencode-dictate-native-tests",
+    "test:python": "python3 -m unittest discover -s test -p 'test_*.py'",
+    "test": "npm run test:native && npm run test:python && npm run build && node --test test/*.test.mjs",
+    "check": "tsc --noEmit",
+    "setup": "node scripts/setup.mjs",
+    "doctor": "node scripts/doctor.mjs",
+    "configure:add": "node scripts/plugin-config.mjs add",
+    "configure:remove": "node scripts/plugin-config.mjs remove"
+  },
+  "devDependencies": {
+    "@babel/core": "^7.28.0",
+    "@babel/preset-typescript": "^7.27.0",
+    "@opencode/plugin": "2.1.4",
+    "@opentui/core": "0.6.8",
+    "@opentui/solid": "0.6.8",
+    "@types/node": "^24.0.0",
+    "babel-preset-solid": "1.9.12",
+    "jsonc-parser": "^3.3.1",
+    "solid-js": "1.9.12",
+    "typescript": "^5.9.0"
+  },
+  "overrides": {
+    "seroval": "1.6.3",
+    "seroval-plugins": "1.6.3"
+  }
+}
