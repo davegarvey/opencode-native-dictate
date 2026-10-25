@@ -112,7 +112,7 @@ See [CHANGELOG.md](CHANGELOG.md) for version history.
 
 ## Validation limits
 
-Automated Swift, Python and Node suites pass. A user confirmed a real Parakeet transcription on a Mac, and the local checkout loaded in OpenCode 2.1.4. The npm tarball installed in an isolated consumer; its explicit setup command installed the pinned runtime, built the native recorder and downloaded the model, and `native-dictate doctor` passed all checks except audio input visibility. A headless environment could not run model inference because it has no Metal device. The published npm installation path, live capture in Ghostty, real offline inference, USB selection/disconnect, microphone permission attribution, and the full editor acceptance matrix still need target-Mac checks. The outstanding checks are listed in [docs/manual-testing.md](docs/manual-testing.md) and [docs/acceptance-results.md](docs/acceptance-results.md).
+Automated Swift, Python and Node suites pass. A user confirmed basic live dictation in Ghostty on a Mac after accepting the microphone permission prompt, and the local checkout loaded in OpenCode 2.1.4. The npm tarball installed in an isolated consumer; its explicit setup command installed the pinned runtime, built the native recorder and downloaded the model, and `native-dictate doctor` passed all checks except audio input visibility. A headless environment could not run model inference because it has no Metal device. The published npm installation path, transcription with networking disabled, device-failure handling, and the full editor and lifecycle acceptance matrix remain unverified. See [docs/manual-testing.md](docs/manual-testing.md) and [docs/acceptance-results.md](docs/acceptance-results.md) for the remaining checks.
 
 ## License
 
