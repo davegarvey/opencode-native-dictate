@@ -18,6 +18,7 @@ Use this page to record the real OpenCode/Ghostty results before calling the MVP
 | Check | Result | Evidence |
 |---|---|---|
 | Plugin loads in an isolated OpenCode 2.1.4 TUI from the local checkout | Pass | With temporary XDG config/data/state/cache directories, Ctrl+P palette search displayed **Start local dictation** in the **Dictation** group; process exited without starting a recording. |
+| Basic live dictation in Ghostty on the user's Mac | Pass | User confirmed that dictation worked after accepting macOS's microphone permission prompt for Ghostty. This records the basic live-use smoke test only; it does not cover the full editor, device-failure or lifecycle matrix. |
 | Global plugin loads from two project directories | Pass | Started OpenCode 2.1.4 in two empty temporary project directories using the existing global CLI registration and isolated XDG data; the Dictation palette group and start command appeared in both. Both TUI processes exited cleanly. |
 | Synthetic insertion into empty prompt | Pass | User screenshot shows the synthetic transcript in the prompt. |
 | Synthetic insertion in the middle of text | Pass | User screenshot shows `hello synthetic transcript world` with the cursor after the inserted phrase. |
@@ -36,7 +37,7 @@ Use this page to record the real OpenCode/Ghostty results before calling the MVP
 
 ## Checks still required on the user's Mac
 
-- Verify microphone permission attribution, live levels, cancellation, USB disconnect, silence, quiet speech and offline transcription in Ghostty.
+- Verify recording levels, cancellation, USB disconnect, silence, quiet speech and transcription with networking disabled in Ghostty. The initial microphone permission prompt was accepted for the successful smoke test above; denial/recovery behavior remains untested.
 - Complete the editor matrix in [manual-testing.md](manual-testing.md), especially beginning/end insertion, attachments, pasted blocks, normal undo and held Enter.
 - Run 20 success/cancel/failure cycles, plugin reload and normal/forced host exit; test two independent OpenCode instances and two project directories.
 - Build the reference recordings and run the benchmark matrix before reporting latency or accuracy targets.
