@@ -81,7 +81,7 @@
     "@babel/core": "^7.28.0",
     "@babel/preset-typescript": "^7.27.0",
     "@types/node": "^26.6.5",
-    "babel-preset-solid": "1.9.16",
+    "babel-preset-solid": "1.9.12",
     "typescript": "^7.0.2"
   },
   "overrides": {
