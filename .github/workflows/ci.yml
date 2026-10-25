@@ -50,6 +50,20 @@ jobs:
       - name: Build and inspect the package file list
         run: npm pack --dry-run --json > "$RUNNER_TEMP/native-dictate-pack.json"
 
+      - name: Verify the native-dictate CLI is packaged as an executable
+        run: |
+          node --input-type=module <<'NODE'
+          import { readFileSync } from "node:fs"
+
+          const manifest = JSON.parse(readFileSync("package.json", "utf8"))
+          const pack = JSON.parse(readFileSync(`${process.env.RUNNER_TEMP}/native-dictate-pack.json`, "utf8"))[0]
+          const cli = pack.files.find(file => file.path === "scripts/cli.mjs")
+
+          if (manifest.bin?.["native-dictate"] !== "scripts/cli.mjs" || !cli || (cli.mode & 0o111) === 0) {
+            throw new Error("The npm package must expose scripts/cli.mjs as the executable native-dictate command")
+          }
+          NODE
+
   node-20-compatibility:
     name: node-20-compatibility
     runs-on: macos-15
