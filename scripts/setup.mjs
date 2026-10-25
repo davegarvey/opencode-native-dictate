@@ -69,12 +69,23 @@ function run(command, commandArgs, {env = process.env} = {}) {
 }
 
 try {
+  await mkdir(join(dataRoot, 'bin'), {recursive: true, mode: 0o700});
+  await mkdir(join(dataRoot, 'swift-module-cache'), {recursive: true, mode: 0o700});
   await run('uv', ['python', 'install', '3.12']);
-  await run('uv', ['sync', '--python', '3.12', '--frozen']);
-  await run('npm', ['ci']);
-  await run('npm', ['run', 'build:native']);
-  await run('npm', ['run', 'build']);
-  await run(join(root, '.venv', 'bin', 'python'), [join(root, 'scripts', 'download_model.py'), backend, join(dataRoot, 'models')], {
+  await run('uv', ['sync', '--project', root, '--python', '3.12', '--frozen'], {
+    env: {...process.env, UV_PROJECT_ENVIRONMENT: join(dataRoot, 'python-env')},
+  });
+  await run('/usr/bin/swiftc', [
+    '-module-cache-path', join(dataRoot, 'swift-module-cache'), '-O',
+    join(root, 'native/PermissionGate.swift'),
+    join(root, 'native/AudioDevices.swift'),
+    join(root, 'native/CaptureHealth.swift'),
+    join(root, 'native/AudioFormat.swift'),
+    join(root, 'native/Recorder.swift'),
+    join(root, 'native/main.swift'),
+    '-o', join(dataRoot, 'bin/recorder'),
+  ]);
+  await run(join(dataRoot, 'python-env', 'bin', 'python'), [join(root, 'scripts', 'download_model.py'), backend, join(dataRoot, 'models')], {
     env: {...process.env, HF_HUB_DISABLE_TELEMETRY: '1'},
   });
   console.log(`Setup complete. Verified model directory: ${modelDirectory}`);

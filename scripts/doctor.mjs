@@ -10,6 +10,12 @@ const backendIndex = process.argv.indexOf('--backend')
 const requestedBackend = backendIndex >= 0 ? process.argv[backendIndex + 1] : undefined
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..')
 const modelConfig = JSON.parse(await readFile(join(root, 'config/models.json'), 'utf8'))
+const packageInfo = JSON.parse(await readFile(join(root, 'package.json'), 'utf8'))
+const packageName = packageInfo.name
+const installCommand = `opencode plugin add ${packageName}@${packageInfo.version}`
+const setupCommand = process.env.npm_lifecycle_event === 'doctor'
+  ? 'npm run setup'
+  : `npx --yes --package ${packageName}@${packageInfo.version} native-dictate setup`
 const cliConfigPath = process.env.XDG_CONFIG_HOME
   ? join(process.env.XDG_CONFIG_HOME, 'opencode', 'cli.json')
   : join(homedir(), '.config', 'opencode', 'cli.json')
@@ -17,7 +23,10 @@ const cliText = await readFile(cliConfigPath, 'utf8').catch(() => undefined)
 const cliParseErrors = []
 const cliConfig = cliText ? parse(cliText, cliParseErrors) : undefined
 const pluginEntry = Array.isArray(cliConfig?.plugins)
-  ? cliConfig.plugins.find(entry => entry === root || (entry && typeof entry === 'object' && entry.package === root))
+  ? cliConfig.plugins.find(entry => {
+    const configuredPackage = typeof entry === 'string' ? entry : entry?.package
+    return configuredPackage === root || configuredPackage === packageName || configuredPackage?.startsWith(`${packageName}@`)
+  })
   : undefined
 const pluginOptions = pluginEntry && typeof pluginEntry === 'object' && pluginEntry.options && typeof pluginEntry.options === 'object'
   ? pluginEntry.options
@@ -48,9 +57,9 @@ report('OpenCode host', Boolean(hostVersion), hostVersion ?? (host.error?.code =
   : `could not read version${host.error ? `: ${host.error.message}` : ''}${host.status !== null ? ` (exit ${host.status})` : ''}`))
 if (hostVersion) report('host compatibility', hostVersion === '2.1.4', `development target is 2.1.4; found ${hostVersion}`)
 
-const recorder = join(root, 'bin', 'recorder')
+const recorder = join(dataRoot, 'bin', 'recorder')
 const recorderExists = await access(recorder, constants.X_OK).then(() => true, () => false)
-report('native helper', recorderExists, recorderExists ? recorder : 'run npm run build:native')
+report('native helper', recorderExists, recorderExists ? recorder : `run ${setupCommand}`)
 if (recorderExists) {
   const devices = command(recorder, ['--list-devices'])
   try {
@@ -69,15 +78,15 @@ if (recorderExists) {
   }
 }
 
-const python = pluginOptions.python ?? join(root, '.venv', 'bin', 'python')
+const python = pluginOptions.python ?? join(dataRoot, 'python-env', 'bin', 'python')
 const pythonExists = await access(python, constants.X_OK).then(() => true, () => false)
-report('isolated Python runtime', pythonExists, pythonExists ? python : 'run npm run setup')
+report('isolated Python runtime', pythonExists, pythonExists ? python : `run ${setupCommand}`)
 if (pythonExists) {
   const version = command(python, ['-c', 'import sys; print(f"{sys.version_info.major}.{sys.version_info.minor}")'])
   report('Python version', version.status === 0 && version.stdout.trim() === modelConfig.runtime.python, version.stdout.trim() || version.stderr.trim())
   const mlx = command(python, ['-c', 'from mlx_audio.version import __version__; print(__version__)'])
   report('MLX Audio runtime', mlx.status === 0 && mlx.stdout.trim() === modelConfig.runtime.mlxAudio,
-    mlx.status === 0 ? mlx.stdout.trim() : 'runtime unavailable; run npm run setup')
+    mlx.status === 0 ? mlx.stdout.trim() : `runtime unavailable; run ${setupCommand}`)
 }
 
 if (model) {
@@ -88,14 +97,14 @@ if (model) {
   const names = await readdir(modelPath).catch(() => [])
   const weights = names.some(name => name.endsWith('.safetensors'))
   report('selected model assets', manifest?.repo === model.repo && manifest?.revision === model.revision && hasConfig && weights,
-    manifest?.revision === model.revision && hasConfig && weights ? `${model.repo} at pinned revision ${model.revision}` : `missing or incomplete at ${modelPath}; run npm run setup -- --backend ${backend}`)
+    manifest?.revision === model.revision && hasConfig && weights ? `${model.repo} at pinned revision ${model.revision}` : `missing or incomplete at ${modelPath}; run ${setupCommand}${backend === 'parakeet' ? '' : ` --backend ${backend}`}`)
 }
 
 if (cliText) {
   const registered = Boolean(pluginEntry)
   report('global plugin registration', cliParseErrors.length === 0 && registered,
-    registered ? cliConfigPath : `not registered in ${cliConfigPath}; run npm run configure:add`)
-} else report('global plugin registration', false, `no CLI config at ${cliConfigPath}; run npm run configure:add`)
+    registered ? cliConfigPath : `not registered in ${cliConfigPath}; run '${installCommand}', or npm run configure:add from a local checkout`)
+} else report('global plugin registration', false, `no CLI config at ${cliConfigPath}; run '${installCommand}', or npm run configure:add from a local checkout`)
 
 console.log(failures ? `Doctor found ${failures} item(s) to address. It did not record audio or download files.` : 'Doctor checks passed. No audio was recorded and no files were downloaded.')
 process.exitCode = failures ? 1 : 0

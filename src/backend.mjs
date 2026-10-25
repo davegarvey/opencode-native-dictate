@@ -8,6 +8,7 @@ import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 const root = dirname(dirname(fileURLToPath(import.meta.url)));
 const modelConfig = JSON.parse(readFileSync(join(root, 'config/models.json'), 'utf8')).models;
+const dataRoot = process.env.OPENCODE_DICTATE_HOME ?? join(homedir(), 'Library', 'Application Support', 'OpenCode Native Dictate');
 
 // Bounded line protocol, with explicit exit/error handling and hard deadlines.
 function processLines(command, args, {protocolErrorsFail = false, ...spawnOptions} = {}) {
@@ -88,13 +89,13 @@ function waitForExit(child, milliseconds) {
 export class Backend {
   worker; idleTimer;
   constructor(options = {}) {
-    this.python = options.python ?? join(root, '.venv/bin/python');
+    this.python = options.python ?? join(dataRoot, 'python-env/bin/python');
     this.backend = options.backend ?? 'parakeet';
     const configuredModel = modelConfig[this.backend];
     if (!configuredModel) throw new Error(`Unsupported ASR backend: ${this.backend}`);
     this.modelPathOverride = options.modelPath;
     this.modelPath = this.modelPathOverride ?? join(
-      process.env.OPENCODE_DICTATE_HOME ?? join(homedir(), 'Library', 'Application Support', 'OpenCode Native Dictate'),
+      dataRoot,
       'models', this.backend, configuredModel.revision,
     );
     this.idleMs = options.idleMs ?? 120000;
@@ -111,7 +112,7 @@ export class Backend {
     await this.dispose();
     this.backend = backend;
     this.modelPath = this.modelPathOverride ?? join(
-      process.env.OPENCODE_DICTATE_HOME ?? join(homedir(), 'Library', 'Application Support', 'OpenCode Native Dictate'),
+      dataRoot,
       'models', backend, configuredModel.revision,
     );
   }
@@ -121,7 +122,7 @@ export class Backend {
     const recorderEnv = this.deviceUID
       ? {...process.env, OPENCODE_DICTATE_DEVICE_UID: this.deviceUID}
       : process.env;
-    const recorder = processLines(join(root, 'bin/recorder'), [path], {env: recorderEnv, protocolErrorsFail: true});
+    const recorder = processLines(join(dataRoot, 'bin/recorder'), [path], {env: recorderEnv, protocolErrorsFail: true});
     let cleaned = false;
     const speechGate = new SpeechGate();
     recorder.onLevel = value => {

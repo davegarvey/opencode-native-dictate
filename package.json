@@ -1,34 +1,87 @@
 {
   "name": "opencode-native-dictate",
   "version": "0.1.0",
+  "description": "Offline macOS voice dictation for OpenCode, powered by NVIDIA Parakeet",
   "license": "MIT",
   "type": "module",
-  "private": true,
-  "exports": {
-    "./tui": "./dist/tui.js"
+  "private": false,
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/davegarvey/opencode-native-dictate.git"
+  },
+  "homepage": "https://github.com/davegarvey/opencode-native-dictate#readme",
+  "bugs": {
+    "url": "https://github.com/davegarvey/opencode-native-dictate/issues"
+  },
+  "keywords": [
+    "opencode-plugin",
+    "opencode",
+    "dictation",
+    "speech-to-text",
+    "offline",
+    "local-ai",
+    "parakeet",
+    "mlx",
+    "macos",
+    "ghostty"
+  ],
+  "engines": {
+    "node": ">=20"
+  },
+  "files": [
+    "CHANGELOG.md",
+    "config/",
+    "docs/acceptance-results.md",
+    "docs/architecture.md",
+    "docs/manual-testing.md",
+    "docs/microphone.md",
+    "docs/model-licenses.md",
+    "docs/transcription.md",
+    "docs/releasing.md",
+    "dist/",
+    "native/*.swift",
+    "scripts/doctor.mjs",
+    "scripts/plugin-config.mjs",
+    "scripts/cli.mjs",
+    "scripts/download_model.py",
+    "scripts/setup.mjs",
+    "scripts/transcribe.py",
+    "pyproject.toml",
+    "uv.lock"
+  ],
+  "bin": {
+    "native-dictate": "./scripts/cli.mjs"
   },
   "scripts": {
     "build": "node scripts/build.mjs",
-    "build:native": "mkdir -p bin && /usr/bin/swiftc -module-cache-path /tmp/dictate-swift-cache -O native/PermissionGate.swift native/AudioDevices.swift native/CaptureHealth.swift native/AudioFormat.swift native/Recorder.swift native/main.swift -o bin/recorder",
+    "prepack": "npm run build",
+    "prepublishOnly": "npm run check && npm test",
     "test:native": "/usr/bin/swiftc -module-cache-path /tmp/dictate-swift-test-cache native/PermissionGate.swift native/AudioDevices.swift native/CaptureHealth.swift native/AudioFormat.swift native/tests/PermissionGateTests.swift -o /tmp/opencode-dictate-native-tests && /tmp/opencode-dictate-native-tests",
     "test:python": "python3 -m unittest discover -s test -p 'test_*.py'",
     "test": "npm run test:native && npm run test:python && npm run build && node --test test/*.test.mjs",
     "check": "tsc --noEmit",
-    "setup": "node scripts/setup.mjs",
-    "doctor": "node scripts/doctor.mjs",
-    "configure:add": "node scripts/plugin-config.mjs add",
-    "configure:remove": "node scripts/plugin-config.mjs remove"
+    "setup": "node scripts/cli.mjs setup",
+    "doctor": "node scripts/cli.mjs doctor",
+    "configure:add": "node scripts/cli.mjs configure:add",
+    "configure:remove": "node scripts/cli.mjs configure:remove"
+  },
+  "exports": {
+    "./tui": "./dist/tui.js"
+  },
+  "dependencies": {
+    "@opencode/plugin": "2.1.4",
+    "jsonc-parser": "^3.3.1"
+  },
+  "peerDependencies": {
+    "@opentui/core": ">=0.6.8",
+    "@opentui/solid": ">=0.6.8",
+    "solid-js": ">=1.9.12"
   },
   "devDependencies": {
     "@babel/core": "^7.28.0",
     "@babel/preset-typescript": "^7.27.0",
-    "@opencode/plugin": "2.1.4",
-    "@opentui/core": "0.6.8",
-    "@opentui/solid": "0.6.8",
     "@types/node": "^24.0.0",
     "babel-preset-solid": "1.9.12",
-    "jsonc-parser": "^3.3.1",
-    "solid-js": "1.9.12",
     "typescript": "^5.9.0"
   },
   "overrides": {

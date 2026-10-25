@@ -33,7 +33,7 @@ npm run setup -- --backend qwen3-asr
 
 Setup prints the model and runtime download estimates, checks free disk space, asks before downloading, builds the helper and creates the locked runtime. It can be rerun to resume downloads. Selecting an uninstalled backend fails with a setup instruction; runtime transcription never downloads or falls back.
 
-Use `OPENCODE_DICTATE_HOME` to set the application support directory. `OPENCODE_DICTATE_DEVICE_UID` selects an input device returned by `bin/recorder --list-devices`; when unset, capture binds to macOS's current default input. A configured but unavailable UID is an error.
+Use `OPENCODE_DICTATE_HOME` to set the application support directory. `deviceUID` in the plugin options selects an input device listed by the doctor command; when unset, capture binds to macOS's current default input. A configured but unavailable UID is an error.
 
 ## Remaining checks
 

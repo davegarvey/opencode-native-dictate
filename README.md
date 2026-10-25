@@ -1,71 +1,119 @@
 # OpenCode Native Dictate
 
-Native Dictate records speech through macOS and transcribes it locally with MLX Audio. It inserts the plain transcript at the current OpenCode prompt cursor. It does not submit the prompt or send audio to a service.
+Native Dictate adds local voice dictation to the OpenCode v2 terminal interface. It records through macOS, transcribes on your Mac with NVIDIA Parakeet TDT 0.6B, and inserts the transcript at the prompt cursor. Audio is not sent to a service, and the prompt is never submitted automatically.
+
+It is built for Apple Silicon Macs and was primarily exercised in Ghostty. The current compatibility target is OpenCode 2.1.4; other OpenCode releases have not yet been validated.
 
 ## Requirements
 
-- OpenCode 2.1.4 on Apple Silicon macOS, initially tested with Ghostty
-- Node.js and npm for installation; `uv` for the isolated Python 3.12 runtime
-- About 110 MiB of runtime wheels and 2.51 GB for the default Parakeet model; allow at least 3.5 GB free for setup
-- Microphone permission for the app running OpenCode
+- Apple Silicon Mac running macOS
+- OpenCode 2.1.4 with CLI/TUI plugin support
+- Node.js 20 or newer with npm, for the explicit setup and diagnostic commands
+- `uv` and Xcode Command Line Tools (`swiftc`) for the one-time local setup
+- At least 3.5 GB free for the default Parakeet model and runtime; setup downloads about 2.51 GB of model files
+- Microphone permission for the terminal app running OpenCode
 
-Qwen3-ASR is an optional alternative. Its pinned 0.6B 8-bit model is about 1.01 GB; allow at least 1.8 GB free when selecting it.
+Qwen3-ASR is an optional alternative. Its pinned 0.6B 8-bit model is about 1.01 GB; allow at least 1.8 GB free during setup.
 
-## Install
+## Install from npm
 
-From this repository:
+Native Dictate is terminal-only: it captures audio and writes into the active prompt. Install the pinned npm release with OpenCode's plugin command:
 
 ```sh
+opencode plugin add opencode-native-dictate@0.1.0
+```
+
+OpenCode registers CLI-only plugins in the global v2 `cli.json` (`~/.config/opencode/cli.json`, or `$XDG_CONFIG_HOME/opencode/cli.json`) and manages the npm package cache. Then install the local recorder, isolated Python runtime and selected model:
+
+```sh
+npx --yes --package opencode-native-dictate@0.1.0 native-dictate setup
+```
+
+Setup shows download sizes and asks before downloading. To choose Qwen instead, use:
+
+```sh
+npx --yes --package opencode-native-dictate@0.1.0 native-dictate setup --backend qwen3-asr
+```
+
+Then set the plugin's backend in `cli.json` to match the downloaded model:
+
+```json
+{
+  "plugins": [
+    {
+      "package": "opencode-native-dictate@0.1.0",
+      "options": { "backend": "qwen3-asr" }
+    }
+  ]
+}
+```
+
+Keep your other CLI settings and plugin entries. The same `options` object accepts `binding` for a different shortcut and `deviceUID` for a chosen microphone.
+
+The `npx --yes` flag accepts npm's prompt to fetch the small CLI package; Native Dictate still asks separately before downloading the speech model and runtime.
+
+Restart OpenCode if it is already running. The generated recorder and Python environment live in `~/Library/Application Support/OpenCode Native Dictate`; model files are kept there too. Setup can be rerun after plugin updates. It reuses verified model files.
+
+Check the installation without recording or downloading anything:
+
+```sh
+npx --yes --package opencode-native-dictate@0.1.0 native-dictate doctor
+```
+
+## Install from a local checkout
+
+For development or a locally modified copy, clone the repository and run:
+
+```sh
+npm ci
 npm run setup
 npm run configure:add
 npm run doctor
 ```
 
-Setup prints the download and disk estimates, asks before downloading, then builds the recorder, installs the pinned runtime and downloads only Parakeet. To choose Qwen instead:
-
-```sh
-npm run setup -- --backend qwen3-asr
-npm run configure:add -- --backend qwen3-asr
-```
-
-`configure:add` registers this repository in `~/.config/opencode/cli.json` (or `$XDG_CONFIG_HOME/opencode/cli.json`). It preserves JSONC comments and unrelated settings. If the path is already registered as a string, the command changes it to OpenCode's package-and-options form. No global config is edited until you run this command.
-
-Dictation has a default chord: **Ctrl+X**, then **D**. OpenCode calls Ctrl+X the leader key; the plugin uses `<leader>d`, so it follows OpenCode if you customize that key. To choose another shortcut, run `npm run configure:add -- --binding ctrl+shift+d` (or `--binding '<leader>v'`). To select a microphone, pass its stable UID from `npm run doctor` output:
+This registers the checkout in the OpenCode v2 `cli.json`. It preserves JSONC comments and unrelated settings. To choose Qwen, pass `--backend qwen3-asr` to both `npm run setup` and `npm run configure:add`. To select a different shortcut, pass `--binding '<leader>v'` to `npm run configure:add`; the default is `<leader>d` (Ctrl+X, then D with the default leader). A microphone can be selected by its stable UID from the doctor output:
 
 ```sh
 npm run configure:add -- --device-uid 'YOUR_CORE_AUDIO_DEVICE_UID'
 ```
 
+Remove the npm registration with `opencode plugin remove opencode-native-dictate@0.1.0`. Remove a local-checkout registration with `npm run configure:remove`. Both leave the runtime and model files available for a future install.
+
 ## Use
 
-In OpenCode, focus the normal prompt and press **Ctrl+X**, then **D** to start dictation. It is designed to work with an existing draft and insert at the cursor. You can also open the command palette with **Ctrl+P** and choose **Start local dictation**. `/dictate-start` is available when slash completion is active at the beginning of the prompt.
+Focus the normal editable prompt and press **Ctrl+X**, then **D** to start dictation. You can also open the command palette with **Ctrl+P** and choose **Start local dictation**. `/dictate-start` is available when slash completion is active at the beginning of the prompt.
 
-Speak, then press **Enter** to stop and transcribe. Press **Escape** to cancel and discard the recording. When transcription finishes, the text is left in the prompt for review; it is never submitted automatically. Dictation uses OpenCode's normal editor undo history.
+Speak, then press **Enter** to stop and transcribe. Press **Escape** to cancel and discard the recording. The text is left in the prompt for review; it is never submitted automatically. Dictation uses OpenCode's normal editor undo history.
 
-The footer stays quiet while idle so OpenCode's path and branch details remain visible. During dictation it shows a compact recording indicator with elapsed time and audio level, then a short transcription indicator. Errors appear as brief notifications. Starting is refused outside the normal editable prompt and when text is selected. Typing and paste are consumed while a session is active. Focus, route, cursor or draft changes cancel the session so a late result cannot land in a different prompt.
+The footer stays quiet while idle so OpenCode's path and branch details remain visible. During dictation it shows a recording indicator with elapsed time and audio level, then a short transcription indicator. Errors appear as brief notifications. Starting is refused outside the normal editable prompt and when text is selected. Typing and paste are consumed while a session is active. Focus, route, cursor or draft changes cancel the session so a late result cannot land in a different prompt.
 
 ## Backends and privacy
 
 Parakeet is the default. Qwen3-ASR can be selected explicitly during setup. Both use the same pinned local MLX Audio runtime and run with model downloads disabled. Missing model assets are errors; the plugin does not download at runtime, switch engines or rewrite the transcript with an LLM.
 
-See [docs/transcription.md](docs/transcription.md) for model revisions and limits, [docs/microphone.md](docs/microphone.md) for permission and device behavior, and [docs/manual-testing.md](docs/manual-testing.md) for the Ghostty acceptance steps.
+The npm package includes code and setup files, not model weights. Setup downloads a revision-pinned model from Hugging Face after confirmation. Model licenses differ from the project license; see [docs/model-licenses.md](docs/model-licenses.md). See [docs/transcription.md](docs/transcription.md) for model revisions and limits, [docs/microphone.md](docs/microphone.md) for permission and device behavior, and [docs/manual-testing.md](docs/manual-testing.md) for the Ghostty acceptance steps.
+
+## Development and checks
+
+```sh
+npm ci
+npm run check
+npm test
+npm pack --dry-run
+```
+
+`npm test` runs the Swift, Python and Node test suites. `npm pack --dry-run` builds the JavaScript entrypoint and previews the files that would enter the npm package without publishing it.
+
+An npm publish also runs the type check and full test suite automatically.
+
+The package is still pre-1.0.0. Release checks, package contents and version pinning are documented in [docs/releasing.md](docs/releasing.md).
+
+See [CHANGELOG.md](CHANGELOG.md) for version history.
+
+## Validation limits
+
+Automated Swift, Python and Node suites pass. A user confirmed a real Parakeet transcription on a Mac, and the local checkout loaded in OpenCode 2.1.4. The npm tarball installed in an isolated consumer; its explicit setup command installed the pinned runtime, built the native recorder and downloaded the model, and `native-dictate doctor` passed all checks except audio input visibility. A headless environment could not run model inference because it has no Metal device. The published npm installation path, live capture in Ghostty, real offline inference, USB selection/disconnect, microphone permission attribution, and the full editor acceptance matrix still need target-Mac checks. The outstanding checks are listed in [docs/manual-testing.md](docs/manual-testing.md) and [docs/acceptance-results.md](docs/acceptance-results.md).
 
 ## License
 
 The project code is licensed under the MIT License. Downloaded speech models have separate licenses; see [docs/model-licenses.md](docs/model-licenses.md).
-
-## Check, update and remove
-
-`npm run doctor` checks the host, recorder, input-device list, Python runtime, selected model assets and global registration. It does not record audio or download files. Re-run `npm run setup` after updating this repository; setup reuses matching pinned assets.
-
-Remove the registration with:
-
-```sh
-npm run configure:remove
-```
-
-This leaves model files in Application Support so they can be reused. Delete `~/Library/Application Support/OpenCode Native Dictate` separately only if you want to reclaim that disk space. Restart OpenCode after changing plugin registration.
-
-## Current validation limits
-
-The automated Swift, Python and Node suites pass. Real USB selection/disconnect, microphone permission attribution in Ghostty, model loading against downloaded assets, offline transcription accuracy and the full editor acceptance matrix still require checks on the target Mac. See [docs/architecture.md](docs/architecture.md) for the evidence collected so far and [docs/manual-testing.md](docs/manual-testing.md) for the remaining checks.
