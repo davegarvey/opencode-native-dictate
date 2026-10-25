@@ -50,7 +50,7 @@
     "uv.lock"
   ],
   "bin": {
-    "native-dictate": "./scripts/cli.mjs"
+    "native-dictate": "scripts/cli.mjs"
   },
   "scripts": {
     "build": "node scripts/build.mjs",
