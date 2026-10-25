@@ -2,7 +2,7 @@
 
 Notable changes to OpenCode Native Dictate are recorded here. This project follows semantic versioning; while the major version is zero, minor releases may include breaking changes.
 
-## [0.1.0] - Unreleased
+## [0.1.0] - 2026-10-25
 
 ### Added
 
@@ -14,4 +14,8 @@ Notable changes to OpenCode Native Dictate are recorded here. This project follo
 ### Compatibility
 
 - Targets OpenCode 2.1.4 on Apple Silicon macOS; Ghostty is the primary tested terminal.
-- Full editor, microphone lifecycle, offline and clean npm-install acceptance remains in progress.
+
+### Validation
+
+- Basic live dictation was confirmed in Ghostty after granting microphone permission.
+- The full editor, microphone lifecycle, network-disabled transcription and clean npm-install acceptance matrix remains in progress. See the README validation limits and `docs/acceptance-results.md` for the current results.
