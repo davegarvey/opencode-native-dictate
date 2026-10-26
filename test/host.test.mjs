@@ -98,6 +98,12 @@ test('starts only on a normal prompt route with a focused textarea and idle sess
   assert.equal(activePromptTarget(shell.context, undefined), undefined)
 })
 
+test('allows an explicitly opted-in dictation target while a session is busy', () => {
+  const busy = context({ route: { type: 'session', sessionID: 'session-1' }, status: 'busy' })
+  assert.equal(activePromptTarget(busy.context, 'normal'), undefined)
+  assert.equal(activePromptTarget(busy.context, 'normal', { allowBusySession: true })?.editor, busy.editor)
+})
+
 test('refuses single-line input renderables even when they are focused', () => {
   const focusedInput = Object.create(InputRenderable.prototype)
   Object.defineProperty(focusedInput, 'isDestroyed', { value: false })

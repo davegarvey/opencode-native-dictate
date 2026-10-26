@@ -26,12 +26,19 @@ export default Plugin.define({
     let realSession = false
     let dictation: Dictation | undefined
     let elapsedTimer: ReturnType<typeof setInterval> | undefined
-    const showNotice = (message: string, variant: 'info' | 'warning' | 'error' = 'error') => context.ui.toast.show({
+    const showNotice = (message: string, variant: 'info' | 'warning' | 'error' = 'error', duration = 4000) => context.ui.toast.show({
       title: 'Dictation',
       message,
       variant,
-      duration: 4000,
+      duration,
     })
+    const setupMessage = (error: any) => {
+      const missingPath = `${error?.path ?? ''} ${error?.message ?? ''}`
+      if (error?.code === 'ENOENT' && /(?:\/bin\/recorder|\/python-env\/bin\/python)(?:['"\s]|$)/u.test(missingPath)) {
+        return 'Dictation setup is incomplete. Run npm run setup from a checkout, or the documented native-dictate setup command for an npm install, then restart OpenCode.'
+      }
+      return error instanceof Error ? error.message : String(error)
+    }
     const validation = validateOptions(context.options ?? {})
     const pluginOptions: Record<string, any> = validation.options ?? {backend: 'parakeet'}
 
@@ -78,7 +85,8 @@ export default Plugin.define({
       if (disposed) return
       realSession = false
       clearElapsedTimer()
-      showNotice(error.message)
+      const message = setupMessage(error)
+      showNotice(message, 'error', message.startsWith('Dictation setup is incomplete.') ? 10000 : 4000)
     })
 
     const startDictation = () => {
@@ -87,7 +95,9 @@ export default Plugin.define({
         showNotice(validation.error)
         return
       }
-      const target = capturePromptTarget(context, promptMode)
+      // OpenCode leaves the prompt editable while a response streams. Dictation
+      // only inserts into that editor; it never submits a turn.
+      const target = capturePromptTarget(context, promptMode, { allowBusySession: true })
       if (!target) {
         showNotice('Focus the normal, editable prompt before starting dictation.')
         return

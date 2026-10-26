@@ -1,6 +1,6 @@
 {
   "name": "opencode-native-dictate",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Offline macOS voice dictation for OpenCode, powered by NVIDIA Parakeet",
   "license": "MIT",
   "type": "module",
