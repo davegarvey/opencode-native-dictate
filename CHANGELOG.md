@@ -2,6 +2,17 @@
 
 Notable changes to OpenCode Native Dictate are recorded here. This project follows semantic versioning; while the major version is zero, minor releases may include breaking changes.
 
+## [0.2.0] - 2026-10-26
+
+### Added
+
+- Allow dictation while OpenCode is responding, inserting the transcript into the prompt without submitting it.
+- Show actionable setup instructions when the local recorder or Python runtime is missing.
+
+### Changed
+
+- Clarify in the installation guide that adding the plugin does not install its local recorder and speech runtime.
+
 ## [0.1.0] - 2026-10-25
 
 ### Added

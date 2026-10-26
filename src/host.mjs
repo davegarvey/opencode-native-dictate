@@ -5,11 +5,11 @@ import { InputRenderable, TextareaRenderable } from '@opentui/core'
  * prompt handle, so this accepts a focused multiline editor only while the
  * documented prompt footer is in normal mode and the TUI is on a prompt route.
  */
-export function activePromptTarget(context, promptMode) {
+export function activePromptTarget(context, promptMode, {allowBusySession = false} = {}) {
   const route = context.ui.router.current()
   if (route.type !== 'home' && route.type !== 'session') return undefined
   if (promptMode !== 'normal' || context.keymap.mode.current() !== 'base') return undefined
-  if (route.type === 'session' && context.data.session.status(route.sessionID) !== 'idle') return undefined
+  if (!allowBusySession && route.type === 'session' && context.data.session.status(route.sessionID) !== 'idle') return undefined
 
   const editor = context.renderer.currentFocusedEditor
   if (!(editor instanceof TextareaRenderable) || editor instanceof InputRenderable || editor.isDestroyed) return undefined
@@ -17,8 +17,8 @@ export function activePromptTarget(context, promptMode) {
 }
 
 /** Capture prompt identity plus text/cursor revision for a dictation session. */
-export function capturePromptTarget(context, getPromptMode) {
-  const target = activePromptTarget(context, getPromptMode())
+export function capturePromptTarget(context, getPromptMode, options) {
+  const target = activePromptTarget(context, getPromptMode(), options)
   if (!target) return undefined
   const editor = target.editor
   const routeKey = `${target.route.type}:${target.route.sessionID ?? ''}`
@@ -29,7 +29,7 @@ export function capturePromptTarget(context, getPromptMode) {
     text,
     cursor,
     isCurrent() {
-      const current = activePromptTarget(context, getPromptMode())
+      const current = activePromptTarget(context, getPromptMode(), options)
       if (!current || current.editor !== editor || editor.isDestroyed) return false
       const currentRouteKey = `${current.route.type}:${current.route.sessionID ?? ''}`
       return currentRouteKey === routeKey && editor.plainText === text &&
